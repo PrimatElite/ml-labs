@@ -9,7 +9,7 @@
 
 [Ccылка на данные](https://drive.google.com/drive/folders/1B45ROu8KbjR2S3Wy8mYdcSyMI5RmO-Rr?usp=sharing)
 
-# Правила работы с репозиториям
+# Правила работы с репозиторием
 
 ## Новые фичи и фиксы багов
 
