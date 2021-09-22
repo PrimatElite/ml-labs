@@ -1,0 +1,3 @@
+kedro
+numpy
+opencv-python
