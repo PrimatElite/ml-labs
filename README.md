@@ -22,22 +22,22 @@
 3) Когда issue поступает в работу, оно должно быть перемещено в колонку `In progress` на доске проекта.
 4) Под каждое issue создается отдельная ветка, ветка называется так: `<issue_id-short_desc>`
 
-Например, `2-placer_architecture`
+   Например, `2-placer_architecture`
 
 5) Все коммиты в этой ветке должны начинаться с `#<issue_id>`.
 6) Все issue-ветки сливаются в ветку `develop` через пулл реквесты.
 7) Описания пулл реквестов должны иметь вид `<keyword> #<issue_id>`
 где доступные ключевые слова представлены следующим списком
 
-* close
-* closes
-* closed
-* fix
-* fixes
-* fixed
-* resolve
-* resolves
-* resolved
+   * close
+   * closes
+   * closed
+   * fix
+   * fixes
+   * fixed
+   * resolve
+   * resolves
+   * resolved
 
 8) В конце каждого майлстоуна делается пулл реквест `develop -> main`
 
