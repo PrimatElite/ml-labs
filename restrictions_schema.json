@@ -1,0 +1,55 @@
+{
+    "type": "object",
+    "properties": {
+        "group_number": { "type": "integer" },
+        "restrictions": { "$ref": "#/definitions/restrictions" }
+    },
+    "required": [
+        "restrictions",
+        "group_number"
+    ],
+    "additionalProperties": false,
+    "definitions": {
+        "restriction": {
+        "type": "object",
+        "required": [
+            "restriction_type",
+            "name",
+            "desc"
+        ],
+        "properties": {
+            "restriction_type": {
+                "enum": [
+                    "photo",
+                    "objects",
+                    "polygon",
+                    "placing"
+                ]
+            },
+            "name": {
+                "type": "string"
+            },
+            "desc": {
+                "type": "string"
+            },
+            "measure": {
+                "type": "string"
+            },
+            "range": {
+                "type": "array",
+                "items": {
+                    "type": "number"
+                },
+                "minItems": 1,
+                "maxItems": 2
+            }
+        }
+    },
+        "restrictions": {
+            "type": "array",
+            "items": {
+                "$ref": "#/definitions/restriction"
+            }
+        }
+    }
+}
