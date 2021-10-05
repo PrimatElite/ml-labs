@@ -23,7 +23,10 @@ def validate_config(obj: dict) -> bool:
         with open(scheme_path, "r") as file:
             schema = json.load(file)
     except OSError as e:
-        print("Read schema error:", e)
+        print("Open file error:", e)
+        return False
+    except json.decoder.JSONDecodeError as e:
+        print("Parse schema error:", e)
         return False
 
     try:
