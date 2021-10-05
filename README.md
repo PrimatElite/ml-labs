@@ -79,3 +79,29 @@
  - на фото может присутствовать от 1 до N объектов
  - все объекты на фото должны принадлежать к разным классам
 
+## Пример указания ограничений в формате yaml
+
+Для полного ознакомления с форматом ограничений рекоммендуется ознакомиться со схемой `restrictions_schema.json`
+
+```yaml
+group_number: 1
+restrictions:
+  - restriction_type: photo
+    name: aspect_ratio
+    desc: width / height
+    range:
+      - 0.5
+      - 2
+    measure: degree
+
+  - restriction_type: polygon
+    name: convex
+    desc: Poligon should be convex
+
+  - restriction_type: objects
+    name: max_objects
+    desc: Maximum number of objects in one picture
+    range:
+      - 5
+```
+
