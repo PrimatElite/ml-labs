@@ -1,0 +1,8 @@
+restrictions:
+  - name: a
+    value:
+      - 0.5
+      - 4
+
+  - name: c
+    value: true
