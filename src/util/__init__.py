@@ -18,7 +18,7 @@ def load_config(path: str) -> dict:
 
 
 def validate_config(obj: dict) -> bool:
-    scheme_path = "../../restrictions_schema.json"
+    scheme_path = "./restrictions_schema.json"
     try:
         with open(scheme_path, "r") as file:
             schema = json.load(file)
