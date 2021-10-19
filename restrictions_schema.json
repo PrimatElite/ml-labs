@@ -1,50 +1,64 @@
 {
     "type": "object",
     "properties": {
-        "group_number": { "type": "integer" },
         "restrictions": { "$ref": "#/definitions/restrictions" }
     },
     "required": [
-        "restrictions",
-        "group_number"
+        "restrictions"
     ],
     "additionalProperties": false,
     "definitions": {
-        "restriction": {
-        "type": "object",
-        "required": [
-            "restriction_type",
-            "name",
-            "desc"
-        ],
-        "properties": {
-            "restriction_type": {
-                "enum": [
-                    "photo",
-                    "objects",
-                    "polygon",
-                    "placing"
-                ]
-            },
-            "name": {
-                "type": "string"
-            },
-            "desc": {
-                "type": "string"
-            },
-            "measure": {
-                "type": "string"
-            },
-            "range": {
-                "type": "array",
-                "items": {
-                    "type": "number"
+        "range_restriction": {
+            "type": "object",
+            "required": [
+                "name",
+                "value"
+            ],
+            "properties": {
+                "name": {
+                    "enum": [
+                        "a",
+                        "b"
+                    ]
                 },
-                "minItems": 1,
-                "maxItems": 2
+                "value": {
+                    "type": "array",
+                    "items": {
+                        "type": "number"
+                    },
+                    "minItems": 2,
+                    "maxItems": 2
+                }
             }
-        }
-    },
+        },
+        "boolean_restriction": {
+            "type": "object",
+            "required": [
+                "name",
+                "value"
+            ],
+            "properties": {
+                "name": {
+                    "enum": [
+                        "c",
+                        "d"
+                    ]
+                },
+                "value": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "restriction": {
+            "oneOf": [
+                {
+                    "$ref": "#/definitions/range_restriction"
+                },
+                {
+                    "$ref": "#/definitions/boolean_restriction"
+                }
+            ]
+        },
         "restrictions": {
             "type": "array",
             "items": {
