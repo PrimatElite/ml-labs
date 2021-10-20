@@ -82,26 +82,53 @@
 ## Пример указания ограничений в формате yaml
 
 Для полного ознакомления с форматом ограничений рекоммендуется ознакомиться со схемой `restrictions_schema.json`
+Также некоторые примеры конфигов можно посмотреть в директории `config_examples`
 
 ```yaml
-group_number: 1
 restrictions:
-  - restriction_type: photo
-    name: aspect_ratio
-    desc: width / height
-    range:
+  - name: a
+    value:
       - 0.5
-      - 2
-    measure: degree
+      - 4
 
-  - restriction_type: polygon
-    name: convex
-    desc: Poligon should be convex
+  - name: c
+    value: true
 
-  - restriction_type: objects
-    name: max_objects
-    desc: Maximum number of objects in one picture
-    range:
-      - 5
 ```
+## Артефакты, которые можно указывать в конфиге
+
+### Ограничения в формате range
+1. Зашумленность
+   - name: noise
+2. Размытость
+   - name: blur
+3. Высота съемки
+   - name: shooting_height
+4. Угол съемки
+   - name: shooting_angle
+5. Разрешение
+   - name: resolution
+6. Линейные размеры объектов
+   - name: linear_dim
+7. Расстояние между объектами (и краем листа)
+   - name: distance
+8. Число вершин многоугольника
+   - name: vertex_num
+9. Число объектов на фото
+   - name: objects_num
+
+
+### Ограничения в формате bool
+1. Выпуклость многоугольника
+   - name: convex
+2. Все объекты разных классов
+   - name: all_different
+3. Повороты относительно оси Z
+   - name: rotation
+4. Перекрытия объектов и многоугольника
+   - name: overlap
+5. Вспышки
+   - name: flash
+6. Тени
+   - name: shadows
 

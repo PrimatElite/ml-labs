@@ -17,8 +17,15 @@
             "properties": {
                 "name": {
                     "enum": [
-                        "a",
-                        "b"
+                        "noise",
+                        "blur",
+                        "shooting_height",
+                        "shooting_angle",
+                        "resolution",
+                        "linear_dim",
+                        "distance",
+                        "vertex_num",
+                        "objects_num"
                     ]
                 },
                 "value": {
@@ -40,8 +47,12 @@
             "properties": {
                 "name": {
                     "enum": [
-                        "c",
-                        "d"
+                        "convex",
+                        "all_different",
+                        "rotation",
+                        "overlap",
+                        "flash",
+                        "shadows"
                     ]
                 },
                 "value": {
