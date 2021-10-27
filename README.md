@@ -117,25 +117,25 @@ restrictions:
 9. Число объектов на фото
    - name: objects_num
 10. Ширина изображения 
-   - name: width
+    - name: width
 12. Высота изображения
-   - name: height
+    - name: height
 13. Толщина линии многоугольника
-   - name: line_width
+    - name: line_width
 14. Отношение площади многоугольника к площади A4
-   - name: area_ratio
+    - name: area_ratio
 15. Число одинаковых объектов на фото
-   - name: same_objects_num
+    - name: same_objects_num
 
 ### Ограничения в формате bool
 1. Выпуклость многоугольника
    - name: convex
-2.Повороты относительно оси Z
+2. Повороты относительно оси Z
    - name: rotation
-3.Перекрытия объектов и многоугольника
+3. Перекрытия объектов и многоугольника
    - name: overlap
-4.Вспышки
+4. Вспышки
    - name: flash
-5.Тени
+5. Тени
    - name: shadows
 
