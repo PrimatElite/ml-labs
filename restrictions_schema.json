@@ -21,11 +21,16 @@
                         "blur",
                         "shooting_height",
                         "shooting_angle",
-                        "resolution",
+                        "aspect_ratio",
                         "linear_dim",
                         "distance",
                         "vertex_num",
-                        "objects_num"
+                        "objects_num",
+                        "width",
+                        "height",
+                        "line_width",
+                        "area_ratio",
+                        "same_objects_num"
                     ]
                 },
                 "value": {
