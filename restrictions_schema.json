@@ -25,18 +25,18 @@
                         "resolution",
                         "aspect_ratio",
                         "rotation",
-                        "min_dist_between_objects",
-                        "min_dist_between_objects_polygon",
+                        "min_dist_between_obj",
+                        "min_dist_between_obj_polygon",
                         "max_dist_between_obj_center",
                         "polygon_vertex_num",
                         "polygon_angle",
-                        "objects_num",
+                        "obj_num",
                         "line_width",
                         "area_ratio",
-                        "same_objects_num",
+                        "same_obj_num",
                         "back_shadows",
-                        "back_diff_objects",
-                        "objects_shadows"
+                        "back_diff_obj",
+                        "obj_shadows"
                     ]
                 },
                 "value": {
