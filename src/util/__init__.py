@@ -36,3 +36,16 @@ def validate_config(obj: dict) -> bool:
         return False
 
     return True
+
+
+def get_config(path: str) -> dict:
+    path_to_default_config = "./default_config.yaml"
+
+    custom_config = load_config(path)
+    default_config = load_config(path_to_default_config)
+
+    if validate_config(custom_config) and validate_config(default_config):
+        default_config.update(custom_config)
+        return default_config
+
+    return {}
