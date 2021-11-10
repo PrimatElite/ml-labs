@@ -21,16 +21,22 @@
                         "blur",
                         "shooting_height",
                         "shooting_angle",
+                        "camera_shift",
+                        "resolution",
                         "aspect_ratio",
-                        "linear_dim",
-                        "distance",
-                        "vertex_num",
+                        "rotation",
+                        "min_dist_between_objects",
+                        "min_dist_between_objects_polygon",
+                        "max_dist_between_obj_center",
+                        "polygon_vertex_num",
+                        "polygon_angle",
                         "objects_num",
-                        "width",
-                        "height",
                         "line_width",
                         "area_ratio",
-                        "same_objects_num"
+                        "same_objects_num",
+                        "back_shadows",
+                        "back_diff_objects",
+                        "objects_shadows"
                     ]
                 },
                 "value": {
