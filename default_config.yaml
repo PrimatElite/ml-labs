@@ -1,81 +1,81 @@
 restrictions:
   - name: noise
     value:
-      - 0.5
-      - 4
+      - 0
+      - 0
   - name: blur
     value:
        - 0
-       - 180
+       - 0
   - name: shooting_height
     value:
-      - 0.5
-      - 4
+      - 0
+      - 100
   - name: shooting_angle
     value:
        - 0
-       - 180
+       - 30
   - name: camera_shift
     value:
-      - 0.5
-      - 4
+      - 0
+      - 0
   - name: resolution
     value:
        - 0
-       - 180
+       - 100
   - name: aspect_ratio
     value:
-      - 0.5
-      - 4
+      - 0
+      - 1
   - name: rotation
     value:
        - 0
-       - 180
+       - 0
   - name: min_dist_between_obj
     value:
-      - 0.5
-      - 4
+      - 0
+      - 100
   - name: min_dist_between_obj_polygon
     value:
        - 0
-       - 180
+       - 100
   - name: max_dist_between_obj_center
     value:
-      - 0.5
-      - 4
+      - 0
+      - 100
   - name: polygon_vertex_num
     value:
-       - 0
-       - 180
+       - 4
+       - 4
   - name: polygon_angle
     value:
-      - 0.5
-      - 4
+      - 90
+      - 90
   - name: obj_num
     value:
-       - 0
-       - 180
+       - 1
+       - 3
   - name: line_width
     value:
-      - 0.5
-      - 4
+      - 0
+      - 5
   - name: area_ratio
     value:
        - 0
-       - 180
+       - 1
   - name: same_obj_num
     value:
-      - 0.5
-      - 4
+      - 1
+      - 1
   - name: back_shadows
     value:
        - 0
-       - 180
+       - 100
   - name: back_diff_obj
     value:
-      - 0.5
-      - 4
+      - 0
+      - 0
   - name: obj_shadows
     value:
        - 0
-       - 180
+       - 100
