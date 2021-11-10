@@ -1,0 +1,66 @@
+{
+    "type": "object",
+    "properties": {
+        "restrictions": { "$ref": "#/definitions/restrictions" }
+    },
+    "required": [
+        "restrictions"
+    ],
+    "additionalProperties": false,
+    "definitions": {
+        "range_restriction": {
+            "type": "object",
+            "required": [
+                "name",
+                "value"
+            ],
+            "properties": {
+                "name": {
+                    "enum": [
+                        "noise",
+                        "blur",
+                        "shooting_height",
+                        "shooting_angle",
+                        "camera_shift",
+                        "resolution",
+                        "aspect_ratio",
+                        "rotation",
+                        "min_dist_between_obj",
+                        "min_dist_between_obj_polygon",
+                        "max_dist_between_obj_center",
+                        "polygon_vertex_num",
+                        "polygon_angle",
+                        "obj_num",
+                        "line_width",
+                        "area_ratio",
+                        "same_obj_num",
+                        "back_shadows",
+                        "back_diff_obj",
+                        "obj_shadows"
+                    ]
+                },
+                "value": {
+                    "type": "array",
+                    "items": {
+                        "type": "number"
+                    },
+                    "minItems": 2,
+                    "maxItems": 2
+                }
+            }
+        },
+        "restriction": {
+            "oneOf": [
+                {
+                    "$ref": "#/definitions/range_restriction"
+                }
+            ]
+        },
+        "restrictions": {
+            "type": "array",
+            "items": {
+                "$ref": "#/definitions/restriction"
+            }
+        }
+    }
+}

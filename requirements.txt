@@ -1,3 +1,6 @@
+jsonschema
 kedro
 numpy
 opencv-python
+pytest
+PyYaml
