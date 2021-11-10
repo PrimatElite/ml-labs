@@ -43,35 +43,10 @@
                 }
             }
         },
-        "boolean_restriction": {
-            "type": "object",
-            "required": [
-                "name",
-                "value"
-            ],
-            "properties": {
-                "name": {
-                    "enum": [
-                        "convex",
-                        "all_different",
-                        "rotation",
-                        "overlap",
-                        "flash",
-                        "shadows"
-                    ]
-                },
-                "value": {
-                    "type": "boolean"
-                }
-            }
-        },
         "restriction": {
             "oneOf": [
                 {
                     "$ref": "#/definitions/range_restriction"
-                },
-                {
-                    "$ref": "#/definitions/boolean_restriction"
                 }
             ]
         },
