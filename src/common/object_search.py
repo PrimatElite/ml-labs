@@ -70,6 +70,8 @@ def find_object(image: np.ndarray) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     paper_image_bgr_scaled = cv2.cvtColor(paper_image_bgr, cv2.COLOR_BGR2RGB) / 255.0
     trimap_scaled = trimap / 255.0
 
-    alpha = estimate_alpha_knn(paper_image_bgr_scaled, trimap_scaled)
+    # alpha = estimate_alpha_knn(paper_image_bgr_scaled, trimap_scaled)
+    alpha = np.zeros_like(trimap_scaled)
+    alpha[trimap_scaled > 0] = 1
 
     return paper_image_bgr, np.squeeze(convex_hull, 1), np.uint8(alpha * 255)
