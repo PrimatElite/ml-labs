@@ -1,6 +1,10 @@
 jsonschema
-kedro
+imutils
+matplotlib
 numpy
 opencv-python
+pymatting
 pytest
 PyYaml
+scikit-image
+shapely
