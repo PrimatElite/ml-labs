@@ -1,8 +1,10 @@
-jsonschema
 imutils
+jsonschema
 matplotlib
 numpy
 opencv-python
+pandas
+plotly
 pymatting
 pytest
 PyYaml

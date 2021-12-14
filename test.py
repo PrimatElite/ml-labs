@@ -19,6 +19,7 @@ def check_placer():
     tester.run()
     end = time.time()
     print(f'Time of placer check: {end - start} seconds')
+    tester.plot()
 
 
 if __name__ == '__main__':
