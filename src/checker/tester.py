@@ -232,19 +232,20 @@ class Tester:
 
                 left_image = self._generate_image(left_objects, {constraint: l})
                 cv2.imwrite('../left_image.png', left_image)
-                right_image = self._generate_image(right_objects, {constraint: r})
-                cv2.imwrite('../right_image.png', right_image)
                 left_good_result, left_good_result_time = self._call_placer('../left_image.png', left_good_polygon)
-                right_good_result, right_good_result_time = self._call_placer('../right_image.png', right_good_polygon)
                 self.times.append((left_good_result_time, left_objects_idx, {constraint: l}, left_good_polygon))
-                self.times.append((right_good_result_time, right_objects_idx, {constraint: r}, right_good_polygon))
-
                 if not left_good_result:
                     center_left, center_right = left_value, left_value
                     break
-                elif right_good_result:
-                    center_left, center_right = right_value, right_value
-                    break
+
+                right_image = self._generate_image(right_objects, {constraint: r})
+                cv2.imwrite('../right_image.png', right_image)
+                right_good_result, right_good_result_time = self._call_placer('../right_image.png', right_good_polygon)
+                self.times.append((right_good_result_time, right_objects_idx, {constraint: r}, right_good_polygon))
+                if right_good_result:
+                    center_right = right_value if abs(center_right - left_value) < 1e-9 else center_right
+                    continue
+
                 while r - l > segment_end_len:
                     m = (l + r) / 2
                     if constraint == 'same_obj_num':
