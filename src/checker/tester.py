@@ -13,11 +13,10 @@ from pymatting import blend
 from shapely.geometry import MultiPolygon, Polygon
 from typing import Dict, List, Optional, Tuple
 
-from ..common import load_image, Object, PAPER_SIZE
+from ..common import load_image, Object, PIXELS_PER_MM
 from ..utils import get_config
 
 DEFAULT_HEIGHT = 232.5
-PIXELS_PER_MM = PAPER_SIZE[0] / 297
 PIXELS_PER_CM = PIXELS_PER_MM * 10
 SEGMENT_RATIO = 0.01
 FIRST_TEST_CONSTRAINTS = ['same_obj_num', 'shooting_height', 'rotation', 'noise', 'blur']
@@ -27,6 +26,7 @@ SECOND_TEST_CONSTRAINTS = [
     ['noise', 'shooting_height'],
 ]
 X_SHIFT_CM = 3
+POLYGON_SHIFT = 10
 
 
 # - name: obj_num
@@ -65,7 +65,6 @@ class Tester:
     def _combine_two_convex_hulls(cls, convex_hull1: np.ndarray, convex_hull2: np.ndarray) -> np.ndarray:
         points = list(zip(*MultiPolygon([Polygon(convex_hull1), Polygon(convex_hull2)]).convex_hull.boundary.xy))[:-1]
         return np.array(points[::-1])
-        # return np.squeeze(cv2.convexHull(np.expand_dims(np.concatenate((convex_hull1, convex_hull2)), 1)), 1)
 
     def _combine_two_polygons(self, polygon1: np.ndarray, max_edge1: int, polygon2: np.ndarray,
                               max_edge2: int) -> np.ndarray:
@@ -97,23 +96,37 @@ class Tester:
             else ([translated_polygon2_mex_edge_origin],)
         points = (*points, next_points) if len(next_points) > 0 else points
         new_polygon2 = np.concatenate(points)
-        plt.plot(new_polygon2[:, 0], new_polygon2[:, 1])
+        plt.fill(new_polygon2[:, 0], new_polygon2[:, 1], fill=False)
 
         return self._combine_two_convex_hulls(polygon1, new_polygon2)
+
+    @classmethod
+    def _generate_rectangle_for_object(cls, object_: Object) -> np.ndarray:
+        min_x, min_y, max_x, max_y = object_.bounds
+        w, h = max_x - min_x, max_y - min_y
+        rectangle = np.array([[0, 0], [0, h + POLYGON_SHIFT], [w + POLYGON_SHIFT, h + POLYGON_SHIFT],
+                              [w + POLYGON_SHIFT, 0]])
+        object_convex_hull = np.array([p + [POLYGON_SHIFT // 2 - min_x, POLYGON_SHIFT // 2 - min_y]
+                                       for p in object_.scaled_convex_hull])
+        plt.fill(object_convex_hull[:, 0], object_convex_hull[:, 1], fill=False)
+        plt.fill(rectangle[:, 0], rectangle[:, 1], edgecolor='b', fill=False)
+        plt.gca().set_aspect('equal')
+        plt.show()
+        return rectangle
 
     def _generate_polygon(self, objects: List[Object], constraints: Dict[str, float | int]) -> np.ndarray:
         # - name: polygon_vertex_num
         # - name: polygon_angle
         # - name: area_ratio
-        polygon = objects[0].convex_hull
-        plt.plot(polygon[:, 0], polygon[:, 1])
+        polygon = objects[0].scaled_convex_hull
+        plt.fill(polygon[:, 0], polygon[:, 1], fill=False)
         for object_ in islice(objects, 1, len(objects)):
             max_edge = self._find_max_polygon_edge(polygon)
-            object_polygon = object_.convex_hull
+            object_polygon = object_.scaled_convex_hull
             max_object_edge = self._find_max_polygon_edge(object_polygon)
             polygon = self._combine_two_polygons(polygon, max_edge, object_polygon, max_object_edge)
 
-        plt.plot(polygon[:, 0], polygon[:, 1])
+        plt.fill(polygon[:, 0], polygon[:, 1], edgecolor='b', fill=False)
         plt.gca().set_aspect('equal')
         plt.show()
         return polygon
@@ -161,7 +174,7 @@ class Tester:
             objects_image[y:objects_images[i].shape[0] + y, x:x + objects_images[i].shape[1]] = objects_images[i]
             objects_alpha[y:objects_alphas[i].shape[0] + y, x:x + objects_alphas[i].shape[1]] = objects_alphas[i]
             x += objects_images[i].shape[1] + x_shift
-        foreground_height = height  # round(width / self.config['aspect_ratio'][0])
+        foreground_height = height
         foreground = np.zeros((foreground_height, width, 3), np.uint8)
         alpha = np.zeros((foreground_height, width), np.uint8)
         y_shift = (foreground_height - height) // 2
@@ -197,13 +210,10 @@ class Tester:
             right_value = self.config[constraint][1]
             left, center_left, center_right, right = left_value, right_value, left_value, right_value
             if abs(right_value - left_value) < 1e-9:
-                self.segments[constraint] = [left, center_left, center_right, right]
+                self.segments[constraint] = [left, left, right, right]
                 continue
 
             for i, object_ in enumerate(self.objects):
-                x, y, w, h = cv2.boundingRect(object_.convex_hull)
-                w, h = w / PIXELS_PER_MM, h / PIXELS_PER_MM
-
                 if constraint == 'same_obj_num':
                     left_objects = [object_] * left_value
                     left_objects_idx = [i] * left_value
@@ -214,7 +224,7 @@ class Tester:
                 else:
                     left_objects = right_objects = [object_]
                     left_objects_idx = right_objects_idx = [i]
-                    good_polygon = np.array([[0, 0], [0, h + 10], [w + 10, h + 10], [w + 10, 0]])
+                    good_polygon = self._generate_rectangle_for_object(object_)
                     left_good_polygon = right_good_polygon = good_polygon
 
                 segment_end_len = (right_value - left_value) * SEGMENT_RATIO
@@ -244,7 +254,7 @@ class Tester:
                     else:
                         objects = [object_]
                         objects_idx = [i]
-                        good_polygon = np.array([[0, 0], [0, h + 10], [w + 10, h + 10], [w + 10, 0]])
+                        good_polygon = self._generate_rectangle_for_object(object_)
 
                     m_image = self._generate_image(objects, {constraint: m})
                     cv2.imwrite('../m_image.png', m_image)
@@ -267,10 +277,13 @@ class Tester:
         else:
             objects = self.objects
             objects_idx = list(range(len(self.objects)))
-        min_length = min(object_.min_length for object_ in self.objects) - 10
+        min_length = min(object_.min_length for object_ in self.objects) - POLYGON_SHIFT
         good_polygon = self._generate_polygon(objects, {})
-        w = cv2.contourArea(np.expand_dims(good_polygon, 1)) / min_length
+        w = Polygon(good_polygon).area / min_length
         bad_polygon = np.array([[0, 0], [0, min_length], [w, min_length], [w, 0]])
+        plt.fill(bad_polygon[:, 0], bad_polygon[:, 1], edgecolor='b', fill=False)
+        plt.gca().set_aspect('equal')
+        plt.show()
         image = self._generate_image(objects, constraints)
         cv2.imwrite('../image.png', image)
         good_result, good_result_time = self._call_placer('../image.png', good_polygon)
