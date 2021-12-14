@@ -4,8 +4,11 @@ import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 import os
+import pandas as pd
+import plotly.express as px
 import time
 
+from functools import reduce
 from imutils import rotate_bound
 from intelligent_placer_lib import intelligent_placer
 from itertools import islice
@@ -232,19 +235,20 @@ class Tester:
 
                 left_image = self._generate_image(left_objects, {constraint: l})
                 cv2.imwrite('../left_image.png', left_image)
-                right_image = self._generate_image(right_objects, {constraint: r})
-                cv2.imwrite('../right_image.png', right_image)
                 left_good_result, left_good_result_time = self._call_placer('../left_image.png', left_good_polygon)
-                right_good_result, right_good_result_time = self._call_placer('../right_image.png', right_good_polygon)
                 self.times.append((left_good_result_time, left_objects_idx, {constraint: l}, left_good_polygon))
-                self.times.append((right_good_result_time, right_objects_idx, {constraint: r}, right_good_polygon))
-
                 if not left_good_result:
                     center_left, center_right = left_value, left_value
                     break
-                elif right_good_result:
-                    center_left, center_right = right_value, right_value
-                    break
+
+                right_image = self._generate_image(right_objects, {constraint: r})
+                cv2.imwrite('../right_image.png', right_image)
+                right_good_result, right_good_result_time = self._call_placer('../right_image.png', right_good_polygon)
+                self.times.append((right_good_result_time, right_objects_idx, {constraint: r}, right_good_polygon))
+                if right_good_result:
+                    center_right = right_value if abs(center_right - left_value) < 1e-9 else center_right
+                    continue
+
                 while r - l > segment_end_len:
                     m = (l + r) / 2
                     if constraint == 'same_obj_num':
@@ -341,3 +345,44 @@ class Tester:
         self._do_second_step()
         print(self.test_results)
         print([times[:2] for times in self.times], sep='\n')
+
+    def plot(self):
+        answers = ['right answer', 'undefined', 'wrong answer']
+        segments_df = pd.DataFrame(columns=['constraint', 'answer', 'percentage'])
+        for constraint, values in self.segments.items():
+            if abs(values[0] - values[3]) < 1e-9:
+                continue
+            if abs(values[0] - values[1]) < 1e-9:
+                segments_df = segments_df.append({'constraint': constraint, 'answer': answers[2], 'percentage': 100},
+                                                 ignore_index=True)
+            elif abs(values[2] - values[3]) < 1e-9:
+                segments_df = segments_df.append({'constraint': constraint, 'answer': answers[0], 'percentage': 100},
+                                                 ignore_index=True)
+            else:
+                segment_len = abs(values[3] - values[0]) / 100
+                segments_df = segments_df.append({'constraint': constraint, 'answer': answers[0],
+                                                  'percentage': abs(values[1] - values[0]) / segment_len},
+                                                 ignore_index=True)
+                segments_df = segments_df.append({'constraint': constraint, 'answer': answers[1],
+                                                  'percentage': abs(values[2] - values[1]) / segment_len},
+                                                 ignore_index=True)
+                segments_df = segments_df.append({'constraint': constraint, 'answer': answers[2],
+                                                  'percentage': abs(values[3] - values[2]) / segment_len},
+                                                 ignore_index=True)
+        colors = {answers[0]: 'green', answers[1]: 'grey', answers[2]: 'red'}
+        fig = px.bar(segments_df, x='constraint', y='percentage', color='answer', color_discrete_map=colors)
+        fig.show()
+
+        parts = ['left', 'center', 'right']
+        tests_df = pd.DataFrame(columns=['case', 'part', 'percentage'])
+        for case_idx, values in enumerate(self.test_results):
+            values = reduce(lambda x, y: x + y, values)
+            left = sum(values[:4]) * 25
+            center = sum(values[4:10]) * 100 / 6
+            right = sum(values[10:]) * 25
+            case = ', '.join(SECOND_TEST_CONSTRAINTS[case_idx])
+            tests_df = tests_df.append({'case': case, 'part': parts[0], 'percentage': left}, ignore_index=True)
+            tests_df = tests_df.append({'case': case, 'part': parts[1], 'percentage': center}, ignore_index=True)
+            tests_df = tests_df.append({'case': case, 'part': parts[2], 'percentage': right}, ignore_index=True)
+        fig = px.bar(tests_df, x='case', y='percentage', color='part')
+        fig.show()
