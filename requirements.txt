@@ -7,4 +7,5 @@ pymatting
 pytest
 PyYaml
 scikit-image
+scikit-learn
 shapely
