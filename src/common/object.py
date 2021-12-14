@@ -27,4 +27,4 @@ class Object:
         rotated_box = np.int0(cv2.boxPoints(rotated_rectangle))
         self.min_length = min(np.linalg.norm(rotated_box[1] - rotated_box[0]),
                               np.linalg.norm(rotated_box[1] - rotated_box[2])) / PIXELS_PER_MM
-        self.bounds = tuple(*Polygon(self.scaled_convex_hull).bounds)
+        self.bounds = tuple(Polygon(self.scaled_convex_hull).bounds)
