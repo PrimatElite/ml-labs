@@ -14,8 +14,10 @@ def find_paper(image_bgr: np.ndarray) -> np.ndarray:
     paper_mask = cv2.inRange(image_hsv, (0, 0, 90), (180, 60, 255))
     contours, _ = cv2.findContours(paper_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     paper_contour = max(contours, key=cv2.contourArea)
-    for i in range(100):
-        paper_contour = cv2.approxPolyDP(paper_contour, i, True)
+    eps = 1
+    while paper_contour.shape[0] > 4:
+        paper_contour = cv2.approxPolyDP(paper_contour, eps, True)
+        eps += 1
     paper_contour = np.squeeze(paper_contour)
     paper_image_bgr = perspective.four_point_transform(image_bgr, paper_contour)
     return cv2.resize(paper_image_bgr, PAPER_SIZE if image_bgr.shape[1] > image_bgr.shape[0] else PAPER_SIZE[::-1])

@@ -19,6 +19,7 @@ from typing import Dict, List, Optional, Tuple
 from ..common import load_image, Object, PIXELS_PER_MM
 from ..utils import get_config
 
+
 DEFAULT_HEIGHT = 232.5
 PIXELS_PER_CM = PIXELS_PER_MM * 10
 SEGMENT_RATIO = 0.01
@@ -32,7 +33,6 @@ X_SHIFT_CM = 3
 POLYGON_SHIFT = 10
 
 
-# - name: obj_num
 # - name: back_diff_obj
 
 
@@ -43,15 +43,31 @@ class Tester:
     segments: Dict[str, List[float]]
     test_results: List[List[Tuple[bool, bool]]]
     times: List[Tuple[float, List[int], Dict[str, float | int], np.ndarray]]
+    path_to_images: str
+    path_to_polygons: str
+    path_to_charts: str
+    default_height: float
 
-    def __init__(self, path_to_objects: str, path_to_config: str):
+    def __init__(self, path_to_objects: str, path_to_config: str, path_to_images: str, path_to_polygons: str,
+                 path_to_charts: str):
+        self.path_to_images = path_to_images
+        self.path_to_polygons = path_to_polygons
+        self.path_to_charts = path_to_charts
+        for path in [path_to_images, path_to_polygons, path_to_charts]:
+            if not os.path.exists(path):
+                os.mkdir(path)
         self.background_image = load_image('src/checker/background.png')
         config = get_config(path_to_config)
         self.config = {constraint['name']: constraint['value'] for constraint in config['restrictions']}
+        self.config['shooting_height'] = [self.config['shooting_height'][0] * 10,
+                                          self.config['shooting_height'][1] * 10]
+        self.config['resolution'] = [self.config['resolution'][0] * 1e6, self.config['resolution'][1] * 1e6]
         self.objects = [Object(os.path.join(path_to_objects, file)) for file in os.listdir(path_to_objects)]
         self.segments = {}
         self.test_results = []
         self.times = []
+        self.default_height = np.clip(DEFAULT_HEIGHT, self.config['shooting_height'][0],  # type: ignore
+                                      self.config['shooting_height'][1])
 
     @classmethod
     def _find_max_polygon_edge(cls, polygon: np.ndarray) -> int:
@@ -114,7 +130,7 @@ class Tester:
         plt.fill(object_convex_hull[:, 0], object_convex_hull[:, 1], fill=False)
         plt.fill(rectangle[:, 0], rectangle[:, 1], edgecolor='b', fill=False)
         plt.gca().set_aspect('equal')
-        plt.show()
+        print(rectangle)
         return rectangle
 
     def _generate_polygon(self, objects: List[Object], constraints: Dict[str, float | int]) -> np.ndarray:
@@ -131,12 +147,11 @@ class Tester:
 
         plt.fill(polygon[:, 0], polygon[:, 1], edgecolor='b', fill=False)
         plt.gca().set_aspect('equal')
-        plt.show()
+        print(polygon)
         return polygon
 
     def _generate_image(self, objects: List[Object], constraints: Dict[str, float | int],
-                        polygon: Optional[np.ndarray] = None) -> str:
-        # - name: min_dist_between_obj - минимальное расстояние между объектами
+                        polygon: Optional[np.ndarray] = None) -> np.ndarray:
         # - name: max_dist_between_obj_center - максимальное расстояние от центра объектов до дальних объектов
         # - name: min_dist_between_obj_polygon
         # - name: line_width
@@ -146,7 +161,6 @@ class Tester:
         # - name: obj_shadows
         # - name: camera_shift - сдвиг камеры относительно предметов
         # - name: shooting_angle - перспектива
-        # - name: noise
         objects_images: List[np.ndarray] = []
         objects_alphas: List[np.ndarray] = []
         for i, object_ in enumerate(objects):
@@ -154,8 +168,12 @@ class Tester:
             objects_images.append(object_.image[y:y + h, x:x + w])
             objects_alphas.append(object_.alpha[y:y + h, x:x + w])
 
+        scale = 1
         if 'shooting_height' in constraints:
             scale = DEFAULT_HEIGHT / constraints['shooting_height']
+        elif abs(self.default_height - DEFAULT_HEIGHT) > 1e-9:
+            scale = DEFAULT_HEIGHT / self.default_height
+        if abs(scale - 1) > 1e-9:
             for i in range(len(objects)):
                 h, w = round(objects_images[i].shape[0] * scale), round(objects_images[i].shape[1] * scale)
                 objects_images[i] = cv2.resize(objects_images[i], (w, h))
@@ -207,6 +225,25 @@ class Tester:
         res_time = end - start
         return res, res_time
 
+    @classmethod
+    def _get_constraints_image_path(cls, root: str, constraints: Dict[str, float | int],
+                                    case: Optional[int] = None) -> str:
+        if case is None:
+            constraints_str = '_'.join('%s_%.4f' % (name, value) for name, value in constraints.items())
+            return os.path.join(root, f'{constraints_str}.png')
+        else:
+            constraints_str = '_'.join('%.4f' % value for value in constraints.values())
+            return os.path.join(root, f'{case}_{constraints_str}.png')
+
+    def _save_image(self, image: np.ndarray, constraints: Dict[str, float | int], case: Optional[int] = None) -> str:
+        image_path = self._get_constraints_image_path(self.path_to_images, constraints, case)
+        cv2.imwrite(image_path, image)
+        return image_path
+
+    def _save_polygon(self, constraints: Dict[str, float | int], case: Optional[int] = None):
+        plt.savefig(self._get_constraints_image_path(self.path_to_polygons, constraints, case))
+        plt.clf()
+
     def _do_first_step(self):
         for constraint in FIRST_TEST_CONSTRAINTS:
             left_value = self.config[constraint][0]
@@ -223,27 +260,30 @@ class Tester:
                     right_objects = [object_] * right_value
                     right_objects_idx = [i] * right_value
                     left_good_polygon = self._generate_polygon(left_objects, {})
+                    self._save_polygon({'object': i, constraint: left_value})
                     right_good_polygon = self._generate_polygon(right_objects, {})
+                    self._save_polygon({'object': i, constraint: right_value})
                 else:
                     left_objects = right_objects = [object_]
                     left_objects_idx = right_objects_idx = [i]
                     good_polygon = self._generate_rectangle_for_object(object_)
+                    self._save_polygon({'object': i, constraint: left_value})
                     left_good_polygon = right_good_polygon = good_polygon
 
                 segment_end_len = (right_value - left_value) * SEGMENT_RATIO
                 l, r = left_value, right_value
 
                 left_image = self._generate_image(left_objects, {constraint: l})
-                cv2.imwrite('../left_image.png', left_image)
-                left_good_result, left_good_result_time = self._call_placer('../left_image.png', left_good_polygon)
+                left_image_path = self._save_image(left_image, {'object': i, constraint: l})
+                left_good_result, left_good_result_time = self._call_placer(left_image_path, left_good_polygon)
                 self.times.append((left_good_result_time, left_objects_idx, {constraint: l}, left_good_polygon))
                 if not left_good_result:
                     center_left, center_right = left_value, left_value
                     break
 
                 right_image = self._generate_image(right_objects, {constraint: r})
-                cv2.imwrite('../right_image.png', right_image)
-                right_good_result, right_good_result_time = self._call_placer('../right_image.png', right_good_polygon)
+                right_image_path = self._save_image(right_image, {'object': i, constraint: r})
+                right_good_result, right_good_result_time = self._call_placer(right_image_path, right_good_polygon)
                 self.times.append((right_good_result_time, right_objects_idx, {constraint: r}, right_good_polygon))
                 if right_good_result:
                     center_right = right_value if abs(center_right - left_value) < 1e-9 else center_right
@@ -259,10 +299,11 @@ class Tester:
                         objects = [object_]
                         objects_idx = [i]
                         good_polygon = self._generate_rectangle_for_object(object_)
+                    self._save_polygon({'object': i, constraint: m})
 
                     m_image = self._generate_image(objects, {constraint: m})
-                    cv2.imwrite('../m_image.png', m_image)
-                    m_result, m_result_time = self._call_placer('../m_image.png', good_polygon)
+                    image_path = self._save_image(m_image, {'object': i, constraint: m})
+                    m_result, m_result_time = self._call_placer(image_path, good_polygon)
                     self.times.append((m_result_time, objects_idx, {constraint: m}, good_polygon))
 
                     if m_result:
@@ -273,7 +314,7 @@ class Tester:
                 center_left, center_right = min(l, center_left), max(r, center_right)
             self.segments[constraint] = [left, center_left, center_right, right]
 
-    def _do_second_step_test(self, constraints: Dict[str, float | int]) -> Tuple[bool, bool]:
+    def _do_second_step_test(self, constraints: Dict[str, float | int], case: int) -> Tuple[bool, bool]:
         if 'same_obj_num' in constraints:
             same_obj_num = round(constraints['same_obj_num'])
             objects = self.objects[:-1] + [self.objects[-1]] * same_obj_num
@@ -281,25 +322,28 @@ class Tester:
         else:
             objects = self.objects
             objects_idx = list(range(len(self.objects)))
+        if self.config['obj_num'][1] < len(objects):
+            objects = objects[-self.config['obj_num'][1]:]
+            objects_idx = objects_idx[-self.config['obj_num'][1]:]
+
         min_length = min(object_.min_length for object_ in self.objects) - POLYGON_SHIFT
         good_polygon = self._generate_polygon(objects, {})
+        self._save_polygon(constraints, case)
         w = Polygon(good_polygon).area / min_length
         bad_polygon = np.array([[0, 0], [0, min_length], [w, min_length], [w, 0]])
-        plt.fill(bad_polygon[:, 0], bad_polygon[:, 1], edgecolor='b', fill=False)
-        plt.gca().set_aspect('equal')
-        plt.show()
+
         image = self._generate_image(objects, constraints)
-        cv2.imwrite('../image.png', image)
-        good_result, good_result_time = self._call_placer('../image.png', good_polygon)
-        bad_result, bad_result_time = self._call_placer('../image.png', bad_polygon)
+        image_path = self._save_image(image, constraints, case)
+        good_result, good_result_time = self._call_placer(image_path, good_polygon)
+        bad_result, bad_result_time = self._call_placer(image_path, bad_polygon)
         self.times.append((good_result_time, objects_idx, constraints, good_polygon))
         self.times.append((bad_result_time, objects_idx, constraints, bad_polygon))
         return good_result is True, bad_result is False
 
     def _do_second_step(self):
-        for constraints in SECOND_TEST_CONSTRAINTS:
+        for case, constraints in enumerate(SECOND_TEST_CONSTRAINTS):
             left_results = self._do_second_step_test({constraint: self.segments[constraint][0]
-                                                      for constraint in constraints})
+                                                      for constraint in constraints}, case)
 
             if all(abs(self.segments[constraint][1] - self.segments[constraint][0]) < 1e-9
                    for constraint in constraints):
@@ -308,9 +352,9 @@ class Tester:
             else:
                 left_middle_results = self._do_second_step_test({constraint: (self.segments[constraint][0]
                                                                               + self.segments[constraint][1]) / 2
-                                                                 for constraint in constraints})
+                                                                 for constraint in constraints}, case)
                 center_left_results = self._do_second_step_test({constraint: self.segments[constraint][1]
-                                                                 for constraint in constraints})
+                                                                 for constraint in constraints}, case)
 
             if all(abs(self.segments[constraint][2] - self.segments[constraint][1]) < 1e-9
                    for constraint in constraints):
@@ -319,9 +363,9 @@ class Tester:
             else:
                 center_results = self._do_second_step_test({constraint: (self.segments[constraint][1]
                                                                          + self.segments[constraint][2]) / 2
-                                                            for constraint in constraints})
+                                                            for constraint in constraints}, case)
                 center_right_results = self._do_second_step_test({constraint: self.segments[constraint][2]
-                                                                  for constraint in constraints})
+                                                                  for constraint in constraints}, case)
 
             if all(abs(self.segments[constraint][3] - self.segments[constraint][2]) < 1e-9
                    for constraint in constraints):
@@ -330,9 +374,9 @@ class Tester:
             else:
                 right_middle_results = self._do_second_step_test({constraint: (self.segments[constraint][2]
                                                                                + self.segments[constraint][3]) / 2
-                                                                  for constraint in constraints})
+                                                                  for constraint in constraints}, case)
                 right_results = self._do_second_step_test({constraint: self.segments[constraint][3]
-                                                           for constraint in constraints})
+                                                           for constraint in constraints}, case)
 
             self.test_results.append([left_results, left_middle_results, center_left_results, center_results,
                                       center_right_results, right_middle_results, right_results])
@@ -340,6 +384,7 @@ class Tester:
     def run(self):
         self.segments = {}
         self.test_results = []
+        self.times = []
         self._do_first_step()
         print(self.segments)
         self._do_second_step()
@@ -371,7 +416,7 @@ class Tester:
                                                  ignore_index=True)
         colors = {answers[0]: 'green', answers[1]: 'grey', answers[2]: 'red'}
         fig = px.bar(segments_df, x='constraint', y='percentage', color='answer', color_discrete_map=colors)
-        fig.show()
+        fig.write_html(os.path.join(self.path_to_charts, 'first_step.html'))
 
         parts = ['left', 'center', 'right']
         tests_df = pd.DataFrame(columns=['case', 'part', 'percentage'])
@@ -385,4 +430,4 @@ class Tester:
             tests_df = tests_df.append({'case': case, 'part': parts[1], 'percentage': center}, ignore_index=True)
             tests_df = tests_df.append({'case': case, 'part': parts[2], 'percentage': right}, ignore_index=True)
         fig = px.bar(tests_df, x='case', y='percentage', color='part')
-        fig.show()
+        fig.write_html(os.path.join(self.path_to_charts, 'second_step.html'))
