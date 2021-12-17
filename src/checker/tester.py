@@ -102,19 +102,22 @@ class Tester:
                                     [np.sin(rotation_angle), np.cos(rotation_angle)]])
 
         vector1_mid = polygon1[max_edge1] + normalized_vector1 * vector1_len / 2
-        rotated_vector2_mid = polygon2[max_edge2] - normalized_vector1 * vector2_len / 2
-        translation_vector = vector1_mid - rotated_vector2_mid
-        translated_polygon2_mex_edge_origin = polygon2[max_edge2] \
-            + translation_vector * (1 + PIXELS_PER_MM / np.linalg.norm(translation_vector))
+        rotated_vector2_mid = polygon2[max_edge2] + normalized_vector2 * vector2_len / 2
 
-        prev_points = [translated_polygon2_mex_edge_origin + rotation_matrix.dot(polygon2[idx] - polygon2[max_edge2])
+        prev_points = [vector1_mid + rotation_matrix.dot(polygon2[idx] - rotated_vector2_mid)
                        for idx in range(-1, max_edge2)]
-        next_points = [translated_polygon2_mex_edge_origin + rotation_matrix.dot(polygon2[idx] - polygon2[max_edge2])
+        next_points = [vector1_mid + rotation_matrix.dot(polygon2[idx] - rotated_vector2_mid)
                        for idx in range(max_edge2 + 1, polygon2.shape[0] - 1)]
-        points = (prev_points, [translated_polygon2_mex_edge_origin]) if len(prev_points) > 0 \
-            else ([translated_polygon2_mex_edge_origin],)
+        points = (prev_points, [vector1_mid]) if len(prev_points) > 0 else ([vector1_mid],)
         points = (*points, next_points) if len(next_points) > 0 else points
         new_polygon2 = np.concatenate(points)
+
+        center1 = np.mean(polygon1, 0)
+        center2 = np.mean(new_polygon2, 0)
+        translation_vector = center2 - center1
+        translation_vector_mini = translation_vector / np.linalg.norm(translation_vector) * 3.0
+        new_polygon2 += translation_vector_mini
+
         plt.fill(new_polygon2[:, 0], new_polygon2[:, 1], fill=False)
 
         return self._combine_two_convex_hulls(polygon1, new_polygon2)
@@ -184,7 +187,7 @@ class Tester:
                 objects_images[i] = rotate_bound(objects_images[i], constraints['rotation'])
                 objects_alphas[i] = rotate_bound(objects_alphas[i], constraints['rotation'])
 
-        x_shift = round(min(self.config['min_dist_between_obj'][0], X_SHIFT_CM * 10) * PIXELS_PER_MM)
+        x_shift = round(min(self.config['min_dist_between_obj'][0], X_SHIFT_CM * 10) * PIXELS_PER_MM * scale)
         height = max(objects_images, key=lambda o: o.shape[0]).shape[0] + x_shift * 2
         width = sum(o.shape[1] for o in objects_images) + round(x_shift * (len(objects) + 1))
         objects_image = np.zeros((height, width, 3), np.uint8)
